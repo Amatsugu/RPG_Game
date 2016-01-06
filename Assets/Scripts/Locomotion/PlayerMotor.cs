@@ -1,14 +1,21 @@
 using UnityEngine;
+using UnityEditor;
 using System.Collections;
 namespace LuminousVector
 {
+	[ExecuteInEditMode]
 	public class PlayerMotor : MonoBehaviour
 	{
 		//Public
 		public float jumpSpeed = 9.8f;
+		public int maxJumps = 2;
 		public float speed = 10;
 		public bool facingRight = true;
 		public bool requireGrounded = true;
+		public Vector2 groundCheck;
+		public float groundCheckRadius;
+		public LayerMask groundMask;
+		public float decleration;
 
 		//Private
 		private Rigidbody2D _thisRigidbody;
@@ -16,6 +23,7 @@ namespace LuminousVector
 		private Vector2 _moveVector;
 		private Animator _anim;
 		private bool _isGrounded;
+		private int _remainingJumps;
 
 		void Start ()
 		{
@@ -24,17 +32,29 @@ namespace LuminousVector
 			_anim = GetComponent<Animator>();
 		}
 
+		void OnDrawGizmosSelected()
+		{
+			Gizmos.color = Color.green;
+			Gizmos.DrawWireSphere(new Vector2(_thisTransform.position.x, _thisTransform.position.y) + groundCheck, groundCheckRadius);
+		}
+
 		void FixedUpdate ()
 		{
 			_moveVector.y = _thisRigidbody.velocity.y; //Get current vertical velocity
-			if (Mathf.Abs(_moveVector.y) <= 0.01f) //Turn off jump animation when grounded
+			_anim.SetFloat("vSpeed", _moveVector.y);
+			_isGrounded = Physics2D.OverlapCircle(new Vector2(_thisTransform.position.x, _thisTransform.position.y) + groundCheck, groundCheckRadius, groundMask);
+			_anim.SetBool("isGrounded", _isGrounded);
+			if (_isGrounded) //Turn off jump animation when grounded
 			{
-				_anim.ResetTrigger("jump");
-				_isGrounded = true;
-			}else
-			{
-				_isGrounded = false;
+				_remainingJumps = maxJumps;
 			}
+			
+			_thisRigidbody.velocity = _moveVector; //Apply move vector
+		}
+
+		void Update()
+		{
+			
 			//Only allow movement while on the ground
 			if (_isGrounded || !requireGrounded)
 			{
@@ -54,17 +74,17 @@ namespace LuminousVector
 				else
 				{
 					_moveVector.x = 0;
+					//(_moveVector.x > 0.01f) ? _moveVector.x - Time.fixedDeltaTime * decleration : (_moveVector.x < -0.0f) ? _moveVector.x + Time.fixedDeltaTime * decleration : 0;
 				}
 				_anim.SetFloat("speed", Mathf.Abs(_moveVector.x));
 			}
 			//Jump
-			if (Input.GetKeyDown(KeyCode.Space) && _isGrounded)
+			if (Input.GetKeyDown(KeyCode.Space) && (_isGrounded || _remainingJumps > 0))
 			{
 				_moveVector.y = jumpSpeed;
-				_anim.SetTrigger("jump");
+				_anim.SetBool("isGrounded", false);
+				_remainingJumps--;
 			}
-			
-			_thisRigidbody.velocity = _moveVector; //Apply move vector
 		}
 
 		//Flip sprite direction
