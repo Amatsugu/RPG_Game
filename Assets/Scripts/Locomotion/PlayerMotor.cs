@@ -30,6 +30,7 @@ namespace LuminousVector
 			_thisRigidbody = GetComponent<Rigidbody2D>();
 			_thisTransform = GetComponent<Transform>();
 			_anim = GetComponent<Animator>();
+			_remainingJumps = maxJumps;
 		}
 
 		void OnDrawGizmosSelected()
@@ -38,7 +39,7 @@ namespace LuminousVector
 			Gizmos.DrawWireSphere(new Vector2(_thisTransform.position.x, _thisTransform.position.y) + groundCheck, groundCheckRadius);
 		}
 
-		void FixedUpdate ()
+		void Update ()
 		{
 			_moveVector.y = _thisRigidbody.velocity.y; //Get current vertical velocity
 			_anim.SetFloat("vSpeed", _moveVector.y);
@@ -48,13 +49,7 @@ namespace LuminousVector
 			{
 				_remainingJumps = maxJumps;
 			}
-			
-			_thisRigidbody.velocity = _moveVector; //Apply move vector
-		}
 
-		void Update()
-		{
-			
 			//Only allow movement while on the ground
 			if (_isGrounded || !requireGrounded)
 			{
@@ -81,10 +76,13 @@ namespace LuminousVector
 			//Jump
 			if (Input.GetKeyDown(KeyCode.Space) && (_isGrounded || _remainingJumps > 0))
 			{
+				Debug.Log("jump");
 				_moveVector.y = jumpSpeed;
 				_anim.SetBool("isGrounded", false);
 				_remainingJumps--;
 			}
+
+			_thisRigidbody.velocity = _moveVector; //Apply move vector
 		}
 
 		//Flip sprite direction
