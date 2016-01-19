@@ -69,9 +69,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Camera\CameraFollow2D.cs" />
-    <Compile Include="Assets\Scripts\Locomotion\PlayerMotor.cs" />
+    <Compile Include="Assets\Scripts\Entities\Archer.cs" />
+    <Compile Include="Assets\Scripts\Entities\Character.cs" />
+    <Compile Include="Assets\Scripts\Entities\Entity.cs" />
+    <Compile Include="Assets\Scripts\Entities\Mage.cs" />
+    <Compile Include="Assets\Scripts\Entities\Player.cs" />
+    <Compile Include="Assets\Scripts\Entities\Tank.cs" />
+    <Compile Include="Assets\Scripts\Entities\Warior.cs" />
+    <Compile Include="Assets\Scripts\LevelTools\TileLine.cs" />
+    <Compile Include="Assets\Scripts\Mechanics\CharacterSwitcher.cs" />
     <Compile Include="Assets\Scripts\SpriteControl\RandomSprite.cs" />
     <Compile Include="Assets\Scripts\UI\UIHealthBar.cs" />
+    <Compile Include="Assets\Scripts\UI\UIList.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

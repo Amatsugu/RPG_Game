@@ -1,23 +1,23 @@
 using UnityEngine;
-using UnityEditor;
 using System.Collections;
 namespace LuminousVector
 {
-	[ExecuteInEditMode]
-	public class PlayerMotor : MonoBehaviour
+	[RequireComponent(typeof(Animator))]
+	public abstract class Entity : MonoBehaviour
 	{
-		//Public
+		//public
+		public float curHeatlh = 100;
+		public float maxHealth = 100;
 		public float jumpSpeed = 9.8f;
 		public int maxJumps = 2;
 		public float speed = 10;
 		public bool facingRight = true;
 		public bool requireGrounded = true;
 		public Vector2 groundCheck;
-		public float groundCheckRadius;
+		public float groundCheckRadius = 0.3f;
 		public LayerMask groundMask;
-		public float decleration;
-
-		//Private
+		//private
+		private Entity _lastAttacker;
 		private Rigidbody2D _thisRigidbody;
 		private Transform _thisTransform;
 		private Vector2 _moveVector;
@@ -25,21 +25,22 @@ namespace LuminousVector
 		private bool _isGrounded;
 		private int _remainingJumps;
 
-		void Start ()
+		void Start()
 		{
 			_thisRigidbody = GetComponent<Rigidbody2D>();
 			_thisTransform = GetComponent<Transform>();
 			_anim = GetComponent<Animator>();
 			_remainingJumps = maxJumps;
+			
 		}
 
-		void OnDrawGizmosSelected()
+		protected virtual void OnStart()
 		{
-			Gizmos.color = Color.green;
-			Gizmos.DrawWireSphere(new Vector2(_thisTransform.position.x, _thisTransform.position.y) + groundCheck, groundCheckRadius);
+
 		}
 
-		void Update ()
+		//Update
+		void Update()
 		{
 			_moveVector.y = _thisRigidbody.velocity.y; //Get current vertical velocity
 			_anim.SetFloat("vSpeed", _moveVector.y);
@@ -49,18 +50,33 @@ namespace LuminousVector
 			{
 				_remainingJumps = maxJumps;
 			}
+			OnUpdate();
+			_anim.SetFloat("speed", Mathf.Abs(_moveVector.x));
+			_thisRigidbody.velocity = _moveVector; //Apply move vector
+		}
 
-			//Only allow movement while on the ground
+		protected abstract void OnUpdate();
+
+		//Jump
+		protected void Jump()
+		{
+			_moveVector.y = jumpSpeed;
+			_anim.SetBool("isGrounded", false);
+			_remainingJumps--;
+		}
+
+		//Move left/right
+		protected void Move(int dir)
+		{
 			if (_isGrounded || !requireGrounded)
 			{
-				//Move left/right
-				if (Input.GetKey(KeyCode.D)) //Right
+				if (dir > 0) //Right
 				{
 					_moveVector.x = speed;
 					if (!facingRight)
 						FlipDirection();
 				}
-				else if (Input.GetKey(KeyCode.A)) //left
+				else if (dir < 0) //left
 				{
 					_moveVector.x = -speed;
 					if (facingRight)
@@ -69,29 +85,33 @@ namespace LuminousVector
 				else
 				{
 					_moveVector.x = 0;
-					//(_moveVector.x > 0.01f) ? _moveVector.x - Time.fixedDeltaTime * decleration : (_moveVector.x < -0.0f) ? _moveVector.x + Time.fixedDeltaTime * decleration : 0;
 				}
-				_anim.SetFloat("speed", Mathf.Abs(_moveVector.x));
 			}
-			//Jump
-			if (Input.GetKeyDown(KeyCode.Space) && (_isGrounded || _remainingJumps > 0))
-			{
-				Debug.Log("jump");
-				_moveVector.y = jumpSpeed;
-				_anim.SetBool("isGrounded", false);
-				_remainingJumps--;
-			}
-
-			_thisRigidbody.velocity = _moveVector; //Apply move vector
 		}
 
-		//Flip sprite direction
-		void FlipDirection()
+		//Flip the direction of the entity sprite
+		protected void FlipDirection()
 		{
 			facingRight = !facingRight;
 			Vector2 scale = _thisTransform.localScale;
 			scale.x *= -1;
 			_thisTransform.localScale = scale;
 		}
+
+		//Draw the gizmo to indicate ground check radius
+		void OnDrawGizmosSelected()
+		{
+			Gizmos.color = Color.green;
+			Gizmos.DrawWireSphere(new Vector2(transform.position.x, transform.position.y) + groundCheck, groundCheckRadius);
+		}
+
+		//Recieve damage from other entites
+		public virtual void RecieveDamage(float damage, Entity src)
+		{
+			_lastAttacker = src;
+			curHeatlh -= Mathf.Abs(damage);
+		}
+
+		protected abstract void OnDamaged();
 	}
 }
